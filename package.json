@@ -1,0 +1,30 @@
+{
+  "name": "flash-bot-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "web3/index.js",
+  "scripts": {
+    "start": "node web3/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Crypto-Pioneers/flash-bot-server.git"
+  },
+  "keywords": [
+    "flash-bot",
+    "blockchain"
+  ],
+  "author": "crypto-pioneer",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Crypto-Pioneers/flash-bot-server/issues"
+  },
+  "homepage": "https://github.com/Crypto-Pioneers/flash-bot-server#readme",
+  "dependencies": {
+    "bignumber.js": "^9.1.2",
+    "dotenv": "^16.4.5",
+    "log4js": "^6.9.1",
+    "web3": "^4.8.0"
+  }
+}
