@@ -1,0 +1,14 @@
+{
+  "case1": {
+    "borrowTokenAddress": "0xba566a7bac1db923c56db3111e155ac9a03beeee",
+    "swapTokenAddress": "0x55d398326f99059ff775485246999027b3197955",
+    "amount": 1,
+    "routerAddress": "0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24"
+  },
+  "case2": {
+    "borrowTokenAddress": "",
+    "swapTokenAddress": "",
+    "amount": "",
+    "routerAddress": ""
+  }
+}
