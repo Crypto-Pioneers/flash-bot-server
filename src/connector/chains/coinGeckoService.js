@@ -4,7 +4,7 @@ import Web3, { WebSocketProvider } from "web3";
 
 const COINGECKO_PRICE_API_URL = CONSTANTS.COINGECKO_URL;
 
-export const subscribeToEthereumPriceChanges = (callback) => {
+export const subscribeToPriceAndBlockNumChanges = (callback) => {
   let prevPrice = null;
   let prevBlockNum = null;
   let intervalId = null;
@@ -30,23 +30,14 @@ export const subscribeToEthereumPriceChanges = (callback) => {
       // console.log("connectCnt", connectCnt);
       const responsePrices = await Axios.get(COINGECKO_PRICE_API_URL);
       const responseBlockNum = await web3.eth.getBlockNumber();
-      const price = responsePrices?.data?.ethereum?.usd;
+      console.log('responsePrices', responsePrices?.data);
+      const price = responsePrices?.data?.binancecoin?.usd;
       if (!price) {
         throw new Error("Unable to fetch Ethereum price.");
       }
 
       if (prevPrice == null) prevPrice = price;
       if (prevBlockNum == null) prevBlockNum = responseBlockNum;
-
-      // console.log("price", price);
-      // console.log("block num", responseBlockNum);
-      // console.log(
-      //   "blocknum equal",
-      //   responseBlockNum !== prevBlockNum ? "ok" : "failed"
-      // );
-      // console.log("price equal", price !== prevPrice ? "ok" : "failed");
-      // console.log("prev block", prevBlockNum);
-      // console.log("prev price", prevPrice);
 
       let isTransactionActive = false;
       if (
@@ -57,24 +48,29 @@ export const subscribeToEthereumPriceChanges = (callback) => {
       ) {
         isTransactionActive = true;
       }
+
+      prevPrice = price;
+      prevBlockNum = responseBlockNum;
+      // console.log('blocknumber', responseBlockNum);
+      
       callback(
         price,
         isTransactionActive,
-        "success connecttion.",
+        "success",
         responseBlockNum
       );
     } catch (error) {
+      // console.log('blocknumber', prevBlockNum);
       callback(
         prevPrice,
         false,
         "Too many requests.",
-        connectCnt,
         prevBlockNum
       );
 
-      console.error("Error while fetching Ethereum price:", error.toString());
+      // console.error("Error while fetching Ethereum price:", error.toString());
     }
-  }, 1000 * 10); // Poll every 10 seconds
+  }, 1000 * 3); // Poll every 10 seconds
 
   return () => {
     clearInterval(intervalId);

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect , useRef} from "react";
 import Web3, { WebSocketProvider } from "web3";
 import BigNumber from "bignumber.js";
 
-import { subscribeToEthereumPriceChanges } from "./coinGeckoService";
+import { subscribeToPriceAndBlockNumChanges } from "./coinGeckoService";
 import FlashBot from "../out/Flashloanbot.sol/Flashloanbot.json";
 import CONSTANTS from "../../constants/index.json";
 import pairsJaon from "../utils/json/pairs.json";
@@ -25,66 +25,94 @@ export default function App() {
   const [ethereumPrice, setEthereumPrice] = useState(null);
   const [status, setStatus] = useState("");
   const [connectCnt, setConnectCnt] = useState(0);
-  const [profit, setProfit] = useState(0);
-  const [blockNum, setBlockNum] = useState("");
+  const [blockNumber, setBlockNumber] = useState(null);
+  const [err, setErr] = useState("");
+  const [logs, setLogs] = useState([]);
+  const [tokenAddress, setTokenAddress] = useState("");
 
   // connect wallet
   const { address: admin } = web3.eth.accounts.wallet.add(
     CONSTANTS.PRIVATE_KEY
   );
-
   const handlePriceChange = async (
     price,
     isTransactionActive,
     status,
-    connectCnt,
     responseBlockNum
   ) => {
-    setConnectCnt(connectCnt);
-    setEthereumPrice(price);
-    setStatus(status);
-    setBlockNum(responseBlockNum);
+    // setEthereumPrice(price);
+    // setStatus(status);
+    // setBlockNumber(responseBlockNum!=null ? responseBlockNum.toString():  "");
 
-    // if (isTransactionActive) {
-    await executeFlashBot();
-    // }
+    // setLogs(logs => {
+    //   logs.push(`price: $${price}, status: ${status}, block number: ${responseBlockNum}`);
+    //   console.log('logs', logs);
+    //   return logs;
+    // });
+
+    setLogs(prevLog => [...prevLog, `price: $${price}, status: ${status}, block number: ${responseBlockNum}`]);
+
+    if (isTransactionActive) {
+      setLogs(prevLog => [...prevLog, `call contract.`]);
+
+       // await executeFlashBot(pairsJaon.case1);
+       // await executeFlashBot(pairsJaon.case2);
+    }
   };
 
-  // flashBot.executeSuccess((sendAmount, receiveAmount) => {
-  //   const profit = receiveAmount - sendAmount;
-  //   if (profit > 0) {
-  //     console.log("profit", profit);
-  //     setProfit(profit);
-  //   }
-  // });
+  flashBot.executeSuccess((sendAmount, receiveAmount) => {
+    const profit = receiveAmount - sendAmount;
+    if (profit > 0) {
+      setLogs(prevLog => [...prevLog, `after call contract, profit ${profit}.`]);
+    }
+  });
 
-  const executeFlashBot = async () => {
+  const executeFlashBot = async (pairParam) => {
     try {
       const res = await flashBot.methods
         .execute(
-          pair.borrowTokenAddress,
-          pair.swapTokenAddress,
-          parseInt(pair.amount) * 1e18,
-          // new BigNumber("1000000000000000000"),
-          pair.routerAddress,
+          pairParam.borrowTokenAddress,
+          pairParam.swapTokenAddress,
+          parseInt(pairParam.amount),
+          pairParam.routerAddress,
           "0x",
           { from: admin }
         )
         .call();
-      console.log("contract reach out ", res);
+      // console.log("contract reach out ", res);
+      // console.log('env test', process.env.REACT_TEST_KEY);
     } catch (e) {
-      console.error("error code", e.code);
+      // console.log('error', e);
+      // console.error("error code", e.code);
+      // console.log('env test', process.env.REACT_TEST_KEY);
+      setErr(e.innerError);
 
-      console.error("contract error", e.toString());
+      // console.error("contract error", e.toString());
     }
   };
 
+
+
   const startPolling = () => {
-    const subscription = subscribeToEthereumPriceChanges(handlePriceChange);
+    const subscription = subscribeToPriceAndBlockNumChanges(handlePriceChange);
     return subscription;
   };
 
+  const widthraw = () => {
+    if (tokenAddress == "") {
+      return alert("please input token address");
+    }
+    try {
+      const res = flashBot.method.widthraw(tokenAddress, {from:admin});
+
+    }
+    catch(e) {
+      console.log('error', e)
+      alert('error', e);
+    }
+  }
   useEffect(() => {
+
     const subscription = startPolling();
 
     return () => {
@@ -92,27 +120,37 @@ export default function App() {
     };
   }, []);
 
+
+  const logRef = useRef(null);
+    useEffect(() => {
+      const logContainer = logRef.current;
+      if (logContainer.scrollHeight > logContainer.clientHeight) {
+        logContainer.scrollTop = logContainer.scrollHeight;
+      }
+  }, [logs]);
+
   return (
-    <div className="App">
-      <div className="App-header">
-        <table>
-          <tr>
-            <td className="float-left"> Ethereum Price:</td>
-            <td>{ethereumPrice ? `$${ethereumPrice.toFixed(2)}` : "--"}</td>
-          </tr>
-          <tr>
-            <td className="float-left"> connect status:</td>
-            <td>{status}</td>
-          </tr>
-          <tr>
-            <td className="float-left"> Block number:</td>
-            <td>{blockNum}</td>
-          </tr>
-          <tr>
-            <td className="float-left"> connection cycle:</td>
-            <td>5s</td>
-          </tr>
-        </table>
+    <div className="" >
+    <div style={{margin:20}}>
+      <input placeholder="token address" value={tokenAddress} onChange={(e)=>{
+        console.log(e.target.value);
+        setTokenAddress(e.target.value)
+      }}/>
+      <button onClick={widthraw}>widthraw</button>
+    </div>
+      <p style={{marginLeft:20}}>pair 1:</p>
+      <div ref={logRef} id="logContainer" style={{overflowY:'scroll', height:'300px', marginTop: '50px'}} >
+        {logs.map((log, i)=>{
+          return (<div key={i} style={{margin:20}}>{log}</div>)
+        })
+      }
+      </div>
+      <p style={{marginLeft:20}}>pair 2:</p>
+      <div ref={logRef} id="logContainer1" style={{overflowY:'scroll', height:'300px', marginTop: '50px'}} >  
+        {logs.map((log, i)=>{
+          return (<div key={i} style={{margin:20}}>{log}</div>)
+        })
+      }
       </div>
     </div>
   );
