@@ -40,3 +40,16 @@ body {
     transform: rotate(360deg);
   }
 }
+
+
+.price-color {
+  color: red;
+}
+
+.connected-color {
+  color: blue;
+}
+
+.blocknum-color {
+  color: green;
+}
