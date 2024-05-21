@@ -1,11 +1,15 @@
 {
   "case1": {
+    "borrowTokenName": "WBNB",
+    "swapTokenName": "BUSD",
     "borrowTokenAddress": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
     "swapTokenAddress": "0xe9e7cea3dedca5984780bafc599bd69add087d56",
     "amount": 1e18,
     "routerAddress": "0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24"
   },
   "case2": {
+    "borrowTokenName": "BUSD",
+    "swapTokenName": "WBNB",
     "borrowTokenAddress": "0xe9e7cea3dedca5984780bafc599bd69add087d56",
     "swapTokenAddress": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
     "amount": 1e10,
