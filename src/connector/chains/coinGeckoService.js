@@ -1,18 +1,15 @@
 import Axios from "axios";
-import CONSTANTS from "../../constants/index.json";
 import Web3, { WebSocketProvider } from "web3";
 
-const COINGECKO_PRICE_API_URL = CONSTANTS.COINGECKO_URL;
-
 export const subscribeToPriceAndBlockNumChanges = (callback) => {
-  let prevPrice = null;
+  let prevPrice = 0;
   let prevBlockNum = null;
   let intervalId = null;
-  let connectCnt = 0;
+  let connectionStatus = true;
 
   const web3 = new Web3(
     new WebSocketProvider(
-      CONSTANTS.BSC_WSS,
+      process.env.REACT_APP_BSC_WSS,
       {},
       {
         maxAttempts: 15,
@@ -24,52 +21,51 @@ export const subscribeToPriceAndBlockNumChanges = (callback) => {
   }
 
   intervalId = setInterval(async () => {
+
+    const responseBlockNum = await web3.eth.getBlockNumber();
+   
+    if (prevBlockNum == null) prevBlockNum = responseBlockNum;
+    
+    let price = 0;
+
     try {
-      // console.log("start");
-      connectCnt++;
-      // console.log("connectCnt", connectCnt);
-      const responsePrices = await Axios.get(COINGECKO_PRICE_API_URL);
-      const responseBlockNum = await web3.eth.getBlockNumber();
-      console.log('responsePrices', responsePrices?.data);
-      const price = responsePrices?.data?.binancecoin?.usd;
+
+      const responsePrices = await Axios.get(process.env.REACT_APP_COINGECKO_URL);
+
+      price = responsePrices?.data?.binancecoin?.usd;
+      
       if (!price) {
         throw new Error("Unable to fetch Ethereum price.");
       }
 
       if (prevPrice == null) prevPrice = price;
-      if (prevBlockNum == null) prevBlockNum = responseBlockNum;
-
-      let isTransactionActive = false;
-      if (
-        price !== prevPrice &&
-        prevPrice != null &&
-        prevBlockNum != null &&
-        responseBlockNum !== prevBlockNum
-      ) {
-        isTransactionActive = true;
-      }
-
-      prevPrice = price;
-      prevBlockNum = responseBlockNum;
-      // console.log('blocknumber', responseBlockNum);
       
-      callback(
-        price,
-        isTransactionActive,
-        "success",
-        responseBlockNum
-      );
     } catch (error) {
-      // console.log('blocknumber', prevBlockNum);
-      callback(
-        prevPrice,
-        false,
-        "Too many requests.",
-        prevBlockNum
-      );
-
-      // console.error("Error while fetching Ethereum price:", error.toString());
+      connectionStatus = false;
+      console.error("Error while fetching Ethereum price:", error.toString());
     }
+
+    let isTransactionActive = false;
+    
+    if (
+       
+      prevPrice != null &&
+      price !== prevPrice  &&
+      prevBlockNum != null &&
+      responseBlockNum !== prevBlockNum
+    ) {
+      isTransactionActive = true;
+    }
+    
+    prevBlockNum = responseBlockNum;
+    prevPrice = price;
+
+    callback(
+      price,
+      isTransactionActive,
+      connectionStatus,
+      responseBlockNum
+    );
   }, 1000 * 3); // Poll every 10 seconds
 
   return () => {
