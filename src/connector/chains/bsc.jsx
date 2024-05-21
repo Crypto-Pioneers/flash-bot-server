@@ -1,6 +1,11 @@
 import React, { useState, useEffect , useRef} from "react";
 import Web3, { WebSocketProvider } from "web3";
 import BigNumber from "bignumber.js";
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import Stack from '@mui/material/Stack';
 
 import { subscribeToPriceAndBlockNumChanges } from "./coinGeckoService";
 import FlashBot from "../out/Flashloanbot.sol/Flashloanbot.json";
@@ -60,7 +65,8 @@ export default function App() {
     }
   };
 
-  flashBot.executeSuccess((sendAmount, receiveAmount) => {
+  flashBot.on('executeSuccess', function(sendAmount, receiveAmount){
+    setLogs(prevLog => [...prevLog, `success calling contract`]);
     const profit = receiveAmount - sendAmount;
     if (profit > 0) {
       setLogs(prevLog => [...prevLog, `after call contract, profit ${profit}.`]);
@@ -86,6 +92,7 @@ export default function App() {
       // console.error("error code", e.code);
       // console.log('env test', process.env.REACT_TEST_KEY);
       setErr(e.innerError);
+      setLogs(prevLog => [...prevLog, `failed calling contract or No profit.`]);
 
       // console.error("contract error", e.toString());
     }
@@ -129,29 +136,70 @@ export default function App() {
       }
   }, [logs]);
 
+  const logRef1 = useRef(null);
+    useEffect(() => {
+      const logContainer = logRef1.current;
+      if (logContainer.scrollHeight > logContainer.clientHeight) {
+        logContainer.scrollTop = logContainer.scrollHeight;
+      }
+  }, [logs]);
+
   return (
-    <div className="" >
-    <div style={{margin:20}}>
-      <input placeholder="token address" value={tokenAddress} onChange={(e)=>{
-        console.log(e.target.value);
-        setTokenAddress(e.target.value)
-      }}/>
-      <button onClick={widthraw}>widthraw</button>
-    </div>
-      <p style={{marginLeft:20}}>pair 1:</p>
-      <div ref={logRef} id="logContainer" style={{overflowY:'scroll', height:'300px', marginTop: '50px'}} >
+    <Container maxWidth="md" sx={{
+      width: {
+        lg: '600px',
+        md: '400px'
+      },
+      marginTop:'50px'
+    }}
+    >
+    <Box>
+      FlashLoan Bot
+    </Box>
+    <Box my={2} sx={{
+      width: {
+        lg: '600px',
+        md: '400px'
+      },
+      marginBottom:'50px'
+
+    }}>
+      <Stack
+        direction="row"
+        justifyContent="flex-start"
+        alignItems="left"
+        spacing={0.5}
+      >
+       <TextField
+          required
+          id="outlined-required"
+          label="token address"
+          size="small"
+          defaultValue={tokenAddress} 
+          value={tokenAddress} 
+          onChange={(e)=>{
+            console.log(e.target.value);
+            setTokenAddress(e.target.value)
+          }}
+          sx={{mr:2}}
+        />
+      <Button variant="contained" onClick={widthraw}>widthraw</Button>
+      </Stack>
+    </Box>
+      <p sx={{textAlign:'left', fontWeight:500 }}>pair 1 ({pairsJaon.case1.borrowTokenName} -> {pairsJaon.case1.swapTokenName}) :</p>
+      <Box ref={logRef1} id="logContainer" sx={{overflowY:'scroll', height:'300px', marginTop: '20px', border:'1px solid #eee'}} >
         {logs.map((log, i)=>{
           return (<div key={i} style={{margin:20}}>{log}</div>)
         })
       }
-      </div>
-      <p style={{marginLeft:20}}>pair 2:</p>
-      <div ref={logRef} id="logContainer1" style={{overflowY:'scroll', height:'300px', marginTop: '50px'}} >  
+      </Box>
+      <p sx={{textAlign:'left'}}>pair 2 ({pairsJaon.case1.borrowTokenName} -> {pairsJaon.case1.swapTokenName}) :</p>
+      <Box ref={logRef} id="logContainer1" sx={{overflowY:'scroll', height:'300px', marginTop: '20px', border:'1px solid #eee'}} >  
         {logs.map((log, i)=>{
           return (<div key={i} style={{margin:20}}>{log}</div>)
         })
       }
-      </div>
-    </div>
+      </Box>
+    </Container>
   );
 }
