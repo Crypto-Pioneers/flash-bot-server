@@ -80,11 +80,11 @@ export default function App() {
         )
         .call();
     } catch (e) {
-      // console.log('error', e);
+      console.log('error', e.innerError);
       // console.error("error code", e.code);
       const time = getTime();
       setErr(e.innerError);
-      setLogs(prevLog => [...prevLog, `timss:${time}, failed calling contract or No profit.`]);
+      setLogs(prevLog => [...prevLog, `timss:${time}, ${e.innerError}`]);
 
       // console.error("contract error", e.toString());
     }
